@@ -12,7 +12,7 @@ const programParsingSchema: Schema = {
     provider: { type: Type.STRING, description: "The company providing the points (e.g., Chase, Amex, Delta)" },
     balance: { type: Type.NUMBER, description: "Current point or mile balance" },
     currencyName: { type: Type.STRING, description: "Name of the currency (e.g. Points, Miles)" },
-    expirationDate: { type: Type.STRING, description: "Expiration date in YYYY-MM-DD format, or null if not found or no expiration." },
+    expirationDate: { type: Type.STRING, description: "Expiration date of the POINTS in YYYY-MM-DD format. Null if no expiration." },
     type: { 
       type: Type.STRING, 
       enum: [ProgramType.AIRLINE, ProgramType.HOTEL, ProgramType.CREDIT_CARD, ProgramType.OTHER],
@@ -20,8 +20,22 @@ const programParsingSchema: Schema = {
     },
     benefits: {
       type: Type.ARRAY,
-      items: { type: Type.STRING },
-      description: "List of benefits mentioned or generally known for this card/program level."
+      items: { 
+        type: Type.OBJECT,
+        properties: {
+          title: { type: Type.STRING },
+          description: { type: Type.STRING },
+          type: { 
+             type: Type.STRING, 
+             enum: ["Generic", "Free Night", "Companion Fare", "Travel Credit", "Lounge Access", "Insurance", "Status"],
+             description: "Categorize the benefit. Detect 'Free Night' for hotels, 'Companion Fare' for airlines."
+          },
+          count: { type: Type.NUMBER, description: "Quantity, e.g. 2 passes, 1 certificate. Default to 1." },
+          expirationDate: { type: Type.STRING, description: "Specific expiration for this benefit/certificate if mentioned." }
+        },
+        required: ["title", "type"]
+      },
+      description: "List of benefits, credits, or certificates."
     }
   },
   required: ["programName", "provider", "balance", "type", "currencyName"]
@@ -32,8 +46,7 @@ export const parseProgramFromText = async (text: string): Promise<any> => {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: `Extract loyalty program or credit card details from the following text. 
-      If specific benefits aren't listed but the card name is known (e.g. "Amex Platinum"), 
-      infer top 3 common benefits.
+      Look for specific high-value benefits like "Free Night Awards", "Companion Fares", or "Travel Credits".
       
       Text to parse:
       "${text}"`,
@@ -57,7 +70,7 @@ export const getPortfolioAdvice = async (query: string, programs: Program[]): Pr
     type: p.type,
     balance: `${p.balance} ${p.currencyName}`,
     expiration: p.expirationDate || "Never",
-    benefits: p.benefits.map(b => b.title).join(", ")
+    benefits: p.benefits.map(b => `${b.count || 1}x ${b.title} (${b.type}) ${b.expirationDate ? `expires ${b.expirationDate}` : ''}`).join(", ")
   }));
 
   const systemInstruction = `You are an expert Points & Miles Advisor. 

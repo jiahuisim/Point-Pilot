@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { usePoints } from '../context/PointsContext';
-import { Program, ProgramType } from '../types';
-import { Trash2, Edit2, Plane, Hotel, CreditCard, Gift, MoreVertical, AlertTriangle } from 'lucide-react';
+import { Program, ProgramType, BenefitType } from '../types';
+import { Trash2, Plane, Hotel, CreditCard, Gift, AlertTriangle, Moon, Ticket, Armchair, Sparkles } from 'lucide-react';
 
 const ProgramList: React.FC = () => {
   const { programs, deleteProgram } = usePoints();
@@ -17,6 +17,25 @@ const ProgramList: React.FC = () => {
       case ProgramType.HOTEL: return <Hotel size={18} />;
       case ProgramType.CREDIT_CARD: return <CreditCard size={18} />;
       default: return <Gift size={18} />;
+    }
+  };
+
+  const getBenefitIcon = (type: BenefitType) => {
+    switch(type) {
+      case BenefitType.FREE_NIGHT: return <Moon size={14} />;
+      case BenefitType.COMPANION_FARE: return <Ticket size={14} />;
+      case BenefitType.LOUNGE_ACCESS: return <Armchair size={14} />;
+      case BenefitType.STATUS: return <Sparkles size={14} />;
+      default: return <Gift size={14} />;
+    }
+  };
+
+  const getBenefitStyle = (type: BenefitType) => {
+    switch(type) {
+      case BenefitType.FREE_NIGHT: return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+      case BenefitType.COMPANION_FARE: return 'bg-pink-100 text-pink-700 border-pink-200';
+      case BenefitType.TRAVEL_CREDIT: return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      default: return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
 
@@ -82,7 +101,7 @@ const ProgramList: React.FC = () => {
 
                 {/* Expiration */}
                 <div className="w-full sm:w-32 text-sm">
-                  <p className="text-slate-400 text-xs mb-1">Expires</p>
+                  <p className="text-slate-400 text-xs mb-1">Points Expiration</p>
                   <div className={`flex items-center gap-1.5 font-medium ${program.expirationDate ? 'text-slate-700' : 'text-green-600'}`}>
                      {program.expirationDate && <AlertTriangle size={14} className="text-orange-400"/>}
                      {formatDate(program.expirationDate)}
@@ -101,14 +120,29 @@ const ProgramList: React.FC = () => {
                 </div>
               </div>
 
-              {/* Benefits Expansion (Simple list for now) */}
+              {/* Benefits Expansion */}
               {program.benefits.length > 0 && (
-                <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-2">
-                  {program.benefits.map((b, idx) => (
-                    <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
-                      {b.title}
-                    </span>
-                  ))}
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Benefits & Credits</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {program.benefits.map((b, idx) => (
+                      <div key={idx} className={`flex flex-col p-3 rounded-lg border ${getBenefitStyle(b.type)}`}>
+                        <div className="flex items-start justify-between mb-1">
+                          <div className="flex items-center gap-1.5 font-semibold text-sm">
+                            {getBenefitIcon(b.type)}
+                            {b.count && b.count > 1 && <span className="bg-white/50 px-1.5 rounded text-xs">{b.count}x</span>}
+                            <span>{b.title}</span>
+                          </div>
+                        </div>
+                        {b.description && <p className="text-xs opacity-80 mb-1 line-clamp-2">{b.description}</p>}
+                        {b.expirationDate && (
+                          <p className="text-[10px] font-medium mt-auto flex items-center gap-1 opacity-75">
+                            Expires: {new Date(b.expirationDate).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

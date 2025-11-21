@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Program, ProgramType, Benefit } from '../types';
+import { Program, ProgramType, Benefit, BenefitType } from '../types';
 
 interface PointsContextType {
   programs: Program[];
@@ -23,9 +23,9 @@ const MOCK_PROGRAMS: Program[] = [
     lastUpdated: new Date().toISOString(),
     expirationDate: undefined,
     benefits: [
-      { id: 'b1', title: '$300 Travel Credit', description: 'Annual reimbursement for travel purchases.' },
-      { id: 'b2', title: 'Priority Pass Select', description: 'Access to airport lounges worldwide.' },
-      { id: 'b3', title: 'TSA PreCheck/Global Entry Credit', description: 'Up to $100 statement credit every 4 years.' }
+      { id: 'b1', type: BenefitType.TRAVEL_CREDIT, title: '$300 Travel Credit', description: 'Annual reimbursement for travel purchases.', value: 300 },
+      { id: 'b2', type: BenefitType.LOUNGE_ACCESS, title: 'Priority Pass Select', description: 'Access to airport lounges worldwide.' },
+      { id: 'b3', type: BenefitType.GENERIC, title: 'TSA PreCheck/Global Entry Credit', description: 'Up to $100 statement credit every 4 years.', value: 100 }
     ]
   },
   {
@@ -36,14 +36,14 @@ const MOCK_PROGRAMS: Program[] = [
     balance: 45200,
     currencyName: 'Miles',
     lastUpdated: new Date().toISOString(),
-    expirationDate: undefined, // Delta miles don't expire
+    expirationDate: undefined, 
     benefits: [
-      { id: 'b4', title: 'Main Cabin 1 Boarding', description: 'Board early with Main Cabin 1.' }
+      { id: 'b4', type: BenefitType.STATUS, title: 'Main Cabin 1 Boarding', description: 'Board early with Main Cabin 1.' }
     ]
   },
   {
     id: '3',
-    name: 'Marriott Bonvoy',
+    name: 'Bonvoy Boundless',
     provider: 'Marriott',
     type: ProgramType.HOTEL,
     balance: 85000,
@@ -51,7 +51,21 @@ const MOCK_PROGRAMS: Program[] = [
     lastUpdated: new Date().toISOString(),
     expirationDate: '2025-12-31', 
     benefits: [
-      { id: 'b5', title: 'Free Night Award', description: 'One free night up to 35k points.' }
+      { id: 'b5', type: BenefitType.FREE_NIGHT, title: 'Free Night Award (35k)', description: 'One free night up to 35k points.', count: 1, expirationDate: '2024-11-30', value: 200 },
+      { id: 'b6', type: BenefitType.STATUS, title: 'Silver Elite Status', description: '10% bonus points on stays.' }
+    ]
+  },
+  {
+    id: '4',
+    name: 'Mileage Plan',
+    provider: 'Alaska Airlines',
+    type: ProgramType.AIRLINE,
+    balance: 12000,
+    currencyName: 'Miles',
+    lastUpdated: new Date().toISOString(),
+    expirationDate: undefined,
+    benefits: [
+      { id: 'b7', type: BenefitType.COMPANION_FARE, title: 'Famous Companion Fare', description: 'Buy one ticket, get one for $99 + taxes.', count: 1, expirationDate: '2024-10-15', value: 400 }
     ]
   }
 ];

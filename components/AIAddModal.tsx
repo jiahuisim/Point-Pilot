@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { parseProgramFromText } from '../services/geminiService';
 import { usePoints } from '../context/PointsContext';
-import { Program, ProgramType } from '../types';
-import { X, Sparkles, Loader2, CheckCircle } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid'; // We'll simulate UUID since no package
+import { Program, ProgramType, Benefit, BenefitType } from '../types';
+import { X, Sparkles, Loader2, Plus, Trash2 } from 'lucide-react';
 
 // Simple ID generator
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -25,6 +24,14 @@ const AIAddModal: React.FC<AIAddModalProps> = ({ isOpen, onClose }) => {
     type: ProgramType.CREDIT_CARD,
     currencyName: 'Points'
   });
+  
+  // Manual Benefits State
+  const [manualBenefits, setManualBenefits] = useState<Benefit[]>([]);
+  const [newBenefit, setNewBenefit] = useState<Partial<Benefit>>({
+    type: BenefitType.GENERIC,
+    title: '',
+    count: 1
+  });
 
   if (!isOpen) return null;
 
@@ -45,10 +52,13 @@ const AIAddModal: React.FC<AIAddModalProps> = ({ isOpen, onClose }) => {
         currencyName: parsedData.currencyName || 'Points',
         expirationDate: parsedData.expirationDate || undefined,
         lastUpdated: new Date().toISOString(),
-        benefits: (parsedData.benefits || []).map((b: string, idx: number) => ({
+        benefits: (parsedData.benefits || []).map((b: any, idx: number) => ({
           id: `b-${idx}`,
-          title: b,
-          description: 'Extracted by AI'
+          title: b.title,
+          description: b.description || 'Extracted by AI',
+          type: b.type as BenefitType || BenefitType.GENERIC,
+          count: b.count || 1,
+          expirationDate: b.expirationDate
         }))
       };
 
@@ -62,6 +72,23 @@ const AIAddModal: React.FC<AIAddModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const addManualBenefit = () => {
+    if (!newBenefit.title) return;
+    setManualBenefits(prev => [...prev, {
+      id: generateId(),
+      title: newBenefit.title!,
+      type: newBenefit.type as BenefitType,
+      count: newBenefit.count || 1,
+      description: newBenefit.description,
+      expirationDate: newBenefit.expirationDate
+    }]);
+    setNewBenefit({ type: BenefitType.GENERIC, title: '', count: 1, description: '', expirationDate: '' });
+  };
+
+  const removeManualBenefit = (id: string) => {
+    setManualBenefits(prev => prev.filter(b => b.id !== id));
+  };
+
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newProgram: Program = {
@@ -73,15 +100,18 @@ const AIAddModal: React.FC<AIAddModalProps> = ({ isOpen, onClose }) => {
       currencyName: manualData.currencyName || 'Points',
       lastUpdated: new Date().toISOString(),
       expirationDate: manualData.expirationDate,
-      benefits: []
+      benefits: manualBenefits
     };
     addProgram(newProgram);
     onClose();
+    // Reset
+    setManualData({ type: ProgramType.CREDIT_CARD, currencyName: 'Points' });
+    setManualBenefits([]);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-8 overflow-hidden animate-scale-in">
         
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50">
@@ -110,11 +140,11 @@ const AIAddModal: React.FC<AIAddModalProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        <div className="p-6 pt-2">
+        <div className="p-6 pt-2 max-h-[70vh] overflow-y-auto">
           {mode === 'ai' ? (
             <div className="space-y-4">
               <p className="text-sm text-slate-500">
-                Paste an email summary, a text message, or just type details like "I have 50k points on my Chase Sapphire Reserve expiring never".
+                Paste a message like: "I have an Alaska card with 12k miles and a Companion Fare expiring next month."
               </p>
               <textarea
                 value={inputText}
@@ -139,27 +169,31 @@ const AIAddModal: React.FC<AIAddModalProps> = ({ isOpen, onClose }) => {
               </button>
             </div>
           ) : (
-            <form onSubmit={handleManualSubmit} className="space-y-3">
-               <div>
-                 <label className="block text-xs font-medium text-slate-700 mb-1">Provider</label>
-                 <input 
-                    required
-                    type="text" 
-                    placeholder="e.g. Chase, Delta"
-                    className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-                    onChange={e => setManualData({...manualData, provider: e.target.value})}
-                 />
+            <form onSubmit={handleManualSubmit} className="space-y-4">
+               {/* Basic Info */}
+               <div className="grid grid-cols-2 gap-3">
+                 <div>
+                   <label className="block text-xs font-medium text-slate-700 mb-1">Provider</label>
+                   <input 
+                      required
+                      type="text" 
+                      placeholder="e.g. Chase"
+                      className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                      onChange={e => setManualData({...manualData, provider: e.target.value})}
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-xs font-medium text-slate-700 mb-1">Program Name</label>
+                   <input 
+                      required
+                      type="text" 
+                      placeholder="e.g. Sapphire"
+                      className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                      onChange={e => setManualData({...manualData, name: e.target.value})}
+                   />
+                 </div>
                </div>
-               <div>
-                 <label className="block text-xs font-medium text-slate-700 mb-1">Program Name</label>
-                 <input 
-                    required
-                    type="text" 
-                    placeholder="e.g. Sapphire Reserve"
-                    className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-                    onChange={e => setManualData({...manualData, name: e.target.value})}
-                 />
-               </div>
+
                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">Type</label>
@@ -184,19 +218,80 @@ const AIAddModal: React.FC<AIAddModalProps> = ({ isOpen, onClose }) => {
                     />
                   </div>
                </div>
-               <div>
-                 <label className="block text-xs font-medium text-slate-700 mb-1">Expiration Date (Optional)</label>
-                 <input 
-                    type="date" 
-                    className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-                    onChange={e => setManualData({...manualData, expirationDate: e.target.value})}
-                 />
+
+               {/* Benefits Section */}
+               <div className="border-t border-slate-100 pt-4">
+                  <label className="block text-sm font-bold text-slate-800 mb-2">Benefits & Credits</label>
+                  
+                  {manualBenefits.length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      {manualBenefits.map(b => (
+                        <div key={b.id} className="flex items-center justify-between bg-slate-50 p-2 rounded-lg text-sm border border-slate-100">
+                           <div className="flex items-center gap-2">
+                             <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                               b.type === BenefitType.FREE_NIGHT ? 'bg-indigo-100 text-indigo-700' : 
+                               b.type === BenefitType.COMPANION_FARE ? 'bg-pink-100 text-pink-700' : 'bg-slate-200 text-slate-600'
+                             }`}>{b.type}</span>
+                             <span className="font-medium text-slate-700">{b.count && b.count > 1 ? `(${b.count}) ` : ''}{b.title}</span>
+                           </div>
+                           <button type="button" onClick={() => removeManualBenefit(b.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={14}/></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-2">
+                     <div className="flex gap-2">
+                        <select 
+                          className="w-1/3 p-2 border border-slate-300 rounded-lg text-xs"
+                          value={newBenefit.type}
+                          onChange={e => setNewBenefit({...newBenefit, type: e.target.value as BenefitType})}
+                        >
+                          <option value={BenefitType.GENERIC}>Generic</option>
+                          <option value={BenefitType.FREE_NIGHT}>Free Night</option>
+                          <option value={BenefitType.COMPANION_FARE}>Comp. Fare</option>
+                          <option value={BenefitType.TRAVEL_CREDIT}>Credit</option>
+                          <option value={BenefitType.LOUNGE_ACCESS}>Lounge</option>
+                        </select>
+                        <input 
+                          type="text" 
+                          placeholder="Benefit Name (e.g. Annual Free Night)" 
+                          className="flex-1 p-2 border border-slate-300 rounded-lg text-xs"
+                          value={newBenefit.title}
+                          onChange={e => setNewBenefit({...newBenefit, title: e.target.value})}
+                        />
+                     </div>
+                     <div className="flex gap-2">
+                        <input 
+                           type="number" 
+                           placeholder="Qty" 
+                           className="w-16 p-2 border border-slate-300 rounded-lg text-xs"
+                           value={newBenefit.count}
+                           onChange={e => setNewBenefit({...newBenefit, count: Number(e.target.value)})}
+                        />
+                        <input 
+                           type="date" 
+                           className="flex-1 p-2 border border-slate-300 rounded-lg text-xs"
+                           value={newBenefit.expirationDate || ''}
+                           onChange={e => setNewBenefit({...newBenefit, expirationDate: e.target.value})}
+                        />
+                        <button 
+                          type="button" 
+                          onClick={addManualBenefit}
+                          disabled={!newBenefit.title}
+                          className="px-3 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                          Add
+                        </button>
+                     </div>
+                  </div>
                </div>
+
                <button
                 type="submit"
-                className="w-full py-2.5 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 mt-2 transition"
+                className="w-full py-2.5 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 mt-4 transition"
               >
-                Add Program
+                Save Program
               </button>
             </form>
           )}

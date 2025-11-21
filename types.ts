@@ -5,11 +5,24 @@ export enum ProgramType {
   OTHER = 'Other'
 }
 
+export enum BenefitType {
+  GENERIC = 'Generic',
+  FREE_NIGHT = 'Free Night',
+  COMPANION_FARE = 'Companion Fare',
+  TRAVEL_CREDIT = 'Travel Credit',
+  LOUNGE_ACCESS = 'Lounge Access',
+  INSURANCE = 'Insurance',
+  STATUS = 'Status'
+}
+
 export interface Benefit {
   id: string;
   title: string;
   description?: string;
   value?: number; // Estimated monetary value
+  type: BenefitType;
+  count?: number; // e.g. 2 Free Night Awards
+  expirationDate?: string; // Specific expiration for this benefit
 }
 
 export interface Program {
@@ -30,6 +43,13 @@ export interface ParsedProgramData {
   provider: string;
   balance: number;
   expirationDate?: string;
-  benefits: string[]; // Simple string list from AI initially
+  currencyName: string;
   type: string;
+  benefits?: {
+    title: string;
+    description?: string;
+    type: string;
+    count?: number;
+    expirationDate?: string;
+  }[];
 }
