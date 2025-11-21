@@ -1,0 +1,5 @@
+{
+  "name": "Points pilot",
+  "description": "A smart dashboard to track your mileage programs, credit card points, and benefits. Features AI-powered text parsing to easily add programs and an AI advisor to optimize your rewards.",
+  "requestFramePermissions": []
+}
