@@ -10,6 +10,8 @@ export enum BenefitType {
   FREE_NIGHT = 'Free Night',
   COMPANION_FARE = 'Companion Fare',
   TRAVEL_CREDIT = 'Travel Credit',
+  DINING_CREDIT = 'Dining Credit',
+  RIDE_CREDIT = 'Ride Credit',
   LOUNGE_ACCESS = 'Lounge Access',
   INSURANCE = 'Insurance',
   STATUS = 'Status'

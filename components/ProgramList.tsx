@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { usePoints } from '../context/PointsContext';
 import { Program, ProgramType, BenefitType } from '../types';
-import { Trash2, Plane, Hotel, CreditCard, Gift, AlertTriangle, Moon, Ticket, Armchair, Sparkles } from 'lucide-react';
+import { Trash2, Plane, Hotel, CreditCard, Gift, AlertTriangle, Moon, Ticket, Armchair, Sparkles, Utensils, Car, Wallet } from 'lucide-react';
 
 const ProgramList: React.FC = () => {
   const { programs, deleteProgram } = usePoints();
@@ -26,22 +26,36 @@ const ProgramList: React.FC = () => {
       case BenefitType.COMPANION_FARE: return <Ticket size={14} />;
       case BenefitType.LOUNGE_ACCESS: return <Armchair size={14} />;
       case BenefitType.STATUS: return <Sparkles size={14} />;
+      case BenefitType.DINING_CREDIT: return <Utensils size={14} />;
+      case BenefitType.RIDE_CREDIT: return <Car size={14} />;
+      case BenefitType.TRAVEL_CREDIT: return <Wallet size={14} />;
       default: return <Gift size={14} />;
     }
   };
 
   const getBenefitStyle = (type: BenefitType) => {
     switch(type) {
-      case BenefitType.FREE_NIGHT: return 'bg-indigo-100 text-indigo-700 border-indigo-200';
-      case BenefitType.COMPANION_FARE: return 'bg-pink-100 text-pink-700 border-pink-200';
-      case BenefitType.TRAVEL_CREDIT: return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      default: return 'bg-slate-100 text-slate-700 border-slate-200';
+      case BenefitType.FREE_NIGHT: return 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100';
+      case BenefitType.COMPANION_FARE: return 'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100';
+      case BenefitType.TRAVEL_CREDIT: return 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100';
+      case BenefitType.DINING_CREDIT: return 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100';
+      case BenefitType.RIDE_CREDIT: return 'bg-slate-800 text-white border-slate-700';
+      default: return 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100';
     }
   };
 
   const formatDate = (isoDate?: string) => {
     if (!isoDate) return 'Never';
     return new Date(isoDate).toLocaleDateString();
+  };
+
+  const isExpiringSoon = (dateStr?: string) => {
+    if (!dateStr) return false;
+    const today = new Date();
+    const date = new Date(dateStr);
+    const threeMonths = new Date();
+    threeMonths.setMonth(today.getMonth() + 3);
+    return date > today && date <= threeMonths;
   };
 
   return (
@@ -122,26 +136,34 @@ const ProgramList: React.FC = () => {
 
               {/* Benefits Expansion */}
               {program.benefits.length > 0 && (
-                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Benefits & Credits</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {program.benefits.map((b, idx) => (
-                      <div key={idx} className={`flex flex-col p-3 rounded-lg border ${getBenefitStyle(b.type)}`}>
-                        <div className="flex items-start justify-between mb-1">
-                          <div className="flex items-center gap-1.5 font-semibold text-sm">
-                            {getBenefitIcon(b.type)}
-                            {b.count && b.count > 1 && <span className="bg-white/50 px-1.5 rounded text-xs">{b.count}x</span>}
-                            <span>{b.title}</span>
+                <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Benefits, Credits & Certificates</p>
+                    <span className="text-xs text-slate-400">{program.benefits.length} items</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {program.benefits.map((b, idx) => {
+                       const expiring = isExpiringSoon(b.expirationDate);
+                       return (
+                        <div key={idx} className={`flex flex-col p-3 rounded-lg border transition-all ${getBenefitStyle(b.type)}`}>
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-1.5 font-bold text-sm">
+                              {getBenefitIcon(b.type)}
+                              {b.count && b.count > 1 && <span className="bg-white/80 backdrop-blur px-1.5 py-0.5 rounded text-xs shadow-sm">{b.count}x</span>}
+                            </div>
+                            {b.expirationDate && (
+                              <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${expiring ? 'bg-red-100 text-red-600' : 'bg-white/50 text-slate-600'}`}>
+                                {expiring && <AlertTriangle size={10}/>}
+                                {new Date(b.expirationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                              </div>
+                            )}
                           </div>
+                          <div className="font-semibold text-sm mb-1 leading-tight">{b.title}</div>
+                          {b.description && <p className="text-xs opacity-80 line-clamp-2">{b.description}</p>}
                         </div>
-                        {b.description && <p className="text-xs opacity-80 mb-1 line-clamp-2">{b.description}</p>}
-                        {b.expirationDate && (
-                          <p className="text-[10px] font-medium mt-auto flex items-center gap-1 opacity-75">
-                            Expires: {new Date(b.expirationDate).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

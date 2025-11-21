@@ -27,11 +27,11 @@ const programParsingSchema: Schema = {
           description: { type: Type.STRING },
           type: { 
              type: Type.STRING, 
-             enum: ["Generic", "Free Night", "Companion Fare", "Travel Credit", "Lounge Access", "Insurance", "Status"],
+             enum: ["Generic", "Free Night", "Companion Fare", "Travel Credit", "Dining Credit", "Ride Credit", "Lounge Access", "Insurance", "Status"],
              description: "Categorize the benefit. Detect 'Free Night' for hotels, 'Companion Fare' for airlines."
           },
           count: { type: Type.NUMBER, description: "Quantity, e.g. 2 passes, 1 certificate. Default to 1." },
-          expirationDate: { type: Type.STRING, description: "Specific expiration for this benefit/certificate if mentioned." }
+          expirationDate: { type: Type.STRING, description: "Specific expiration for this benefit/certificate in YYYY-MM-DD format." }
         },
         required: ["title", "type"]
       },
@@ -47,6 +47,7 @@ export const parseProgramFromText = async (text: string): Promise<any> => {
       model: 'gemini-2.5-flash',
       contents: `Extract loyalty program or credit card details from the following text. 
       Look for specific high-value benefits like "Free Night Awards", "Companion Fares", or "Travel Credits".
+      If a benefit has a specific expiration date mentioned (e.g. "companion fare expires 12/31/2024"), extract it.
       
       Text to parse:
       "${text}"`,

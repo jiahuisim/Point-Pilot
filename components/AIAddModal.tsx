@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { parseProgramFromText } from '../services/geminiService';
 import { usePoints } from '../context/PointsContext';
 import { Program, ProgramType, Benefit, BenefitType } from '../types';
-import { X, Sparkles, Loader2, Plus, Trash2 } from 'lucide-react';
+import { X, Sparkles, Loader2, Trash2 } from 'lucide-react';
 
 // Simple ID generator
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -250,12 +250,16 @@ const AIAddModal: React.FC<AIAddModalProps> = ({ isOpen, onClose }) => {
                           <option value={BenefitType.GENERIC}>Generic</option>
                           <option value={BenefitType.FREE_NIGHT}>Free Night</option>
                           <option value={BenefitType.COMPANION_FARE}>Comp. Fare</option>
-                          <option value={BenefitType.TRAVEL_CREDIT}>Credit</option>
+                          <option value={BenefitType.TRAVEL_CREDIT}>Travel Credit</option>
+                          <option value={BenefitType.DINING_CREDIT}>Dining Credit</option>
+                          <option value={BenefitType.RIDE_CREDIT}>Ride Credit</option>
                           <option value={BenefitType.LOUNGE_ACCESS}>Lounge</option>
+                          <option value={BenefitType.INSURANCE}>Insurance</option>
+                          <option value={BenefitType.STATUS}>Status</option>
                         </select>
                         <input 
                           type="text" 
-                          placeholder="Benefit Name (e.g. Annual Free Night)" 
+                          placeholder="Benefit Name" 
                           className="flex-1 p-2 border border-slate-300 rounded-lg text-xs"
                           value={newBenefit.title}
                           onChange={e => setNewBenefit({...newBenefit, title: e.target.value})}
@@ -269,12 +273,15 @@ const AIAddModal: React.FC<AIAddModalProps> = ({ isOpen, onClose }) => {
                            value={newBenefit.count}
                            onChange={e => setNewBenefit({...newBenefit, count: Number(e.target.value)})}
                         />
-                        <input 
-                           type="date" 
-                           className="flex-1 p-2 border border-slate-300 rounded-lg text-xs"
-                           value={newBenefit.expirationDate || ''}
-                           onChange={e => setNewBenefit({...newBenefit, expirationDate: e.target.value})}
-                        />
+                        <div className="flex-1 relative">
+                            <span className="absolute left-2 top-2 text-[10px] text-slate-400">Expires:</span>
+                            <input 
+                               type="date" 
+                               className="w-full p-2 pl-14 border border-slate-300 rounded-lg text-xs"
+                               value={newBenefit.expirationDate || ''}
+                               onChange={e => setNewBenefit({...newBenefit, expirationDate: e.target.value})}
+                            />
+                        </div>
                         <button 
                           type="button" 
                           onClick={addManualBenefit}
